@@ -8,7 +8,8 @@ export default defineConfig(({ mode }) => {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.IMGUR_CLIENT_ID': JSON.stringify(env.IMGUR_CLIENT_ID),
-        'process.env.XANO_API_ENDPOINT': JSON.stringify(env.XANO_API_ENDPOINT),
+        'process.env.XANO_SAVE_ARTWORK_ENDPOINT': JSON.stringify(env.XANO_SAVE_ARTWORK_ENDPOINT),
+        'process.env.XANO_GET_ARTWORKS_ENDPOINT': JSON.stringify(env.XANO_GET_ARTWORKS_ENDPOINT),
         'process.env.UPLOAD_PASSWORD': JSON.stringify(env.UPLOAD_PASSWORD)
       },
       resolve: {
