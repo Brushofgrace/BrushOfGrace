@@ -23,6 +23,7 @@ const extractTitleFromDescription = (description: string): string | null => {
 /**
  * Saves artwork data to the Xano backend.
  * Extracts title from description if formatted as **Title**.
+ * Uses 'image_description' as the field name for the description sent to Xano.
  * @param artworkData The artwork data to save (title, imageUrl, artist, description, uploadDate).
  * @returns A promise that resolves with the saved Artwork object (including ID from Xano).
  * @throws If the save operation fails or XANO_SAVE_ARTWORK_ENDPOINT is not set.
@@ -33,13 +34,16 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
     throw new Error('Backend service for saving artwork is not configured (SAVE endpoint missing).');
   }
 
-  // Attempt to extract title from description
   const extractedTitle = extractTitleFromDescription(artworkData.description || "");
-  const finalTitle = extractedTitle || artworkData.title; // Use extracted title or fallback to original
+  const finalTitle = extractedTitle || artworkData.title;
 
+  // Prepare payload with 'image_description' for Xano
   const payloadToSave = {
-    ...artworkData,
     title: finalTitle,
+    imageUrl: artworkData.imageUrl,
+    artist: artworkData.artist,
+    image_description: artworkData.description || "", // Use image_description key
+    uploadDate: artworkData.uploadDate,
   };
 
   try {
@@ -65,13 +69,14 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
     }
 
     const savedArtworkResponse: any = await response.json(); 
+    // Map response back to frontend Artwork type, looking for image_description
     const savedArtwork: Artwork = {
         id: String(savedArtworkResponse.id),
-        title: savedArtworkResponse.title || payloadToSave.title, // Ensure title consistency
-        imageUrl: savedArtworkResponse.imageUrl || payloadToSave.imageUrl,
-        artist: savedArtworkResponse.artist || payloadToSave.artist,
-        description: savedArtworkResponse.description || payloadToSave.description || "", // Ensure description is string
-        uploadDate: savedArtworkResponse.uploadDate || payloadToSave.uploadDate,
+        title: savedArtworkResponse.title || finalTitle,
+        imageUrl: savedArtworkResponse.imageUrl || artworkData.imageUrl,
+        artist: savedArtworkResponse.artist || artworkData.artist,
+        description: savedArtworkResponse.image_description || savedArtworkResponse.description || artworkData.description || "", // Prioritize image_description
+        uploadDate: savedArtworkResponse.uploadDate || artworkData.uploadDate,
     };
     
     if (!savedArtwork.id) {
@@ -89,7 +94,7 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
 
 /**
  * Fetches all artworks from the Xano backend.
- * Assumes a GET request to the XANO_GET_ARTWORKS_ENDPOINT returns a list of artworks.
+ * Prioritizes 'image_description' field for descriptions.
  * @returns A promise that resolves with an array of Artwork objects.
  * @throws If the fetch operation fails or XANO_GET_ARTWORKS_ENDPOINT is not set.
  */
@@ -143,13 +148,17 @@ export const fetchArtworksFromBackend = async (): Promise<Artwork[]> => {
           console.warn(`Artwork with id ${item.id || 'N/A'} has missing, invalid, or unresolvable imageUrl. Received data for image:`, {imageUrl: item.imageUrl, image_url: item.image_url, image: item.image });
           finalImageUrl = ''; 
       }
+      
+      const artworkTitle = item.title || "Untitled Artwork";
+      // Prioritize image_description for fetching
+      const artworkDescription = item.image_description || item.description || item.description_text || item.details || item.summary || item.notes || item.artwork_description || "";
 
       return {
-        id: String(item.id || Math.random().toString(36).substring(7)), // Fallback ID for safety
-        title: item.title || "Untitled Artwork", // Ensure title is always a string
+        id: String(item.id || Math.random().toString(36).substring(7)), 
+        title: artworkTitle,
         imageUrl: finalImageUrl,
         artist: item.artist || item.artist_name, 
-        description: item.description || item.description_text || "", // Ensure description is always a string
+        description: artworkDescription, 
         uploadDate: item.uploadDate || item.upload_date || item.created_at || new Date().toISOString(), 
       };
     });

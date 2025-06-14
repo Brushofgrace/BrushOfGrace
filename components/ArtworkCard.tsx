@@ -18,7 +18,7 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
   };
 
   const truncatedDescription = artwork.description
-    ? artwork.description.substring(0, 60) + (artwork.description.length > 60 ? "..." : "")
+    ? artwork.description.substring(0, 100) + (artwork.description.length > 100 ? "..." : "") // Increased substring length
     : "No description available.";
 
   return (
@@ -31,8 +31,8 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
       aria-labelledby={`artwork-title-${artwork.id}`}
       aria-describedby={artwork.description ? `artwork-desc-${artwork.id}` : undefined}
     >
-      {/* Reduced image preview size significantly */}
-      <div className="h-24 w-full bg-white p-1 rounded-t-lg"> {/* Adjusted height from aspect-video */}
+      {/* Increased image preview container height */}
+      <div className="h-40 w-full bg-white p-1 rounded-t-lg"> {/* Adjusted height from h-24 to h-40 */}
         <img 
           src={artwork.imageUrl} 
           alt={artwork.title || "Artwork image"} 
@@ -44,8 +44,8 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
         <h3 id={`artwork-title-${artwork.id}`} className="text-lg font-semibold text-pink-400 mb-1 truncate" title={artwork.title || "Untitled Artwork"}>
           {artwork.title || "Untitled Artwork"}
         </h3>
-        {/* Added artwork description display */}
-        <p id={`artwork-desc-${artwork.id}`} className="text-xs text-slate-400 mt-1 leading-snug h-8 overflow-hidden"> {/* approx 2 lines for text-xs */}
+        {/* Increased height for artwork description display */}
+        <p id={`artwork-desc-${artwork.id}`} className="text-xs text-slate-400 mt-1 leading-snug h-12 overflow-hidden"> {/* Adjusted height from h-8 to h-12 (approx 3 lines for text-xs) */}
           {truncatedDescription}
         </p>
         <div className="flex-grow mt-2"></div> {/* Spacer */}
