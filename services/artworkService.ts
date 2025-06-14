@@ -24,6 +24,7 @@ const extractTitleFromDescription = (description: string | undefined | null): st
  * Saves artwork data to the Xano backend.
  * Extracts title from description if formatted as **Title**.
  * Uses 'image_description' as the field name for the description sent to Xano.
+ * Sends 'image_url' for the image URL.
  * @param artworkData The artwork data to save (title, imageUrl, artist, description, uploadDate).
  * @returns A promise that resolves with the saved Artwork object (including ID from Xano).
  * @throws If the save operation fails or XANO_SAVE_ARTWORK_ENDPOINT is not set.
@@ -37,12 +38,12 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
   const extractedTitle = extractTitleFromDescription(artworkData.description || "");
   const finalTitle = extractedTitle || artworkData.title; // Fallback to original filename based title if AI doesn't provide one
 
-  // Prepare payload with 'image_description' for Xano
+  // Prepare payload with 'image_description' and 'image_url' for Xano
   const payloadToSave = {
-    title: finalTitle, // Send extracted/filename title to Xano's 'title' field
-    imageUrl: artworkData.imageUrl,
+    title: finalTitle,
+    image_url: artworkData.imageUrl, // Changed from imageUrl to image_url
     artist: artworkData.artist,
-    image_description: artworkData.description || "", // Send full AI description to 'image_description'
+    image_description: artworkData.description || "",
     uploadDate: artworkData.uploadDate,
   };
 
@@ -74,7 +75,7 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
     const savedArtwork: Artwork = {
         id: String(savedArtworkResponse.id), // ID must come from Xano's response
         title: finalTitle, // Use the title we determined and intended to save
-        imageUrl: savedArtworkResponse.imageUrl || artworkData.imageUrl,
+        imageUrl: savedArtworkResponse.image_url || savedArtworkResponse.imageUrl || artworkData.imageUrl, // Check both response formats
         artist: savedArtworkResponse.artist || artworkData.artist,
         description: savedArtworkResponse.image_description || savedArtworkResponse.description || artworkData.description || "",
         uploadDate: savedArtworkResponse.uploadDate || artworkData.uploadDate,
@@ -134,10 +135,10 @@ export const fetchArtworksFromBackend = async (): Promise<Artwork[]> => {
     }
     
     const artworks: Artwork[] = rawArtworks.map((item: any) => {
-      let finalImageUrl = item.imageUrl; 
+      let finalImageUrl = item.image_url; // Prioritize image_url from Xano
       if (typeof finalImageUrl !== 'string' || !finalImageUrl) {
-        if (typeof item.image_url === 'string' && item.image_url) { 
-            finalImageUrl = item.image_url;
+        if (typeof item.imageUrl === 'string' && item.imageUrl) { 
+            finalImageUrl = item.imageUrl;
         } else if (item.image && typeof item.image === 'object' && typeof item.image.url === 'string' && item.image.url) { 
             finalImageUrl = item.image.url;
         } else if (typeof item.image === 'string' && item.image) { 
