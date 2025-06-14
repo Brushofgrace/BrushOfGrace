@@ -24,7 +24,7 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(artworkData),
+      body: JSON.stringify(artworkData), // Assumes Xano can handle camelCase or has input mapping
     });
 
     if (!response.ok) {
@@ -33,7 +33,6 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
         const errorData = await response.json();
         errorDetails += `, Message: ${errorData.message || JSON.stringify(errorData)}`;
       } catch (e) {
-        // If response is not JSON or error occurs during parsing
         const textResponse = await response.text();
         errorDetails += `, Body: ${textResponse || 'Unable to retrieve error body.'}`;
       }
@@ -41,15 +40,26 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
       throw new Error(`Failed to save artwork: ${errorDetails}`);
     }
 
-    const savedArtwork: Artwork = await response.json();
-    if (!savedArtwork.id || !savedArtwork.uploadDate) {
-        console.warn('Xano response for saved artwork might be missing id or uploadDate', savedArtwork);
+    // Assuming Xano returns the created object, potentially with an 'id' and matching our Artwork structure.
+    // If Xano returns fields in snake_case, mapping would be needed here too for consistency.
+    const savedArtworkResponse: any = await response.json(); 
+    const savedArtwork: Artwork = {
+        id: String(savedArtworkResponse.id),
+        title: savedArtworkResponse.title || artworkData.title,
+        imageUrl: savedArtworkResponse.imageUrl || artworkData.imageUrl,
+        artist: savedArtworkResponse.artist || artworkData.artist,
+        description: savedArtworkResponse.description || artworkData.description,
+        uploadDate: savedArtworkResponse.uploadDate || artworkData.uploadDate,
+    };
+    
+    if (!savedArtwork.id) {
+        console.warn('Xano response for saved artwork might be missing id', savedArtwork);
     }
     return savedArtwork;
   } catch (error) {
     console.error('Error saving artwork to Xano:', error);
     if (error instanceof Error && error.message.startsWith('Failed to save artwork:')) {
-        throw error; // Re-throw specific error
+        throw error;
     }
     throw new Error('An unexpected error occurred while saving artwork.');
   }
@@ -88,18 +98,45 @@ export const fetchArtworksFromBackend = async (): Promise<Artwork[]> => {
       throw new Error(`Failed to fetch artworks: ${errorDetails}`);
     }
 
-    const artworks: Artwork[] = await response.json();
-    // It's good practice to validate the structure of artworks if possible, 
-    // e.g., check if it's an array and items have expected properties.
-    if (!Array.isArray(artworks)) {
-        console.error('Xano API did not return an array for artworks:', artworks);
+    const rawArtworks: any[] = await response.json();
+
+    if (!Array.isArray(rawArtworks)) {
+        console.error('Xano API did not return an array for artworks:', rawArtworks);
         throw new Error('Failed to fetch artworks: Invalid data format received.');
     }
+    
+    const artworks: Artwork[] = rawArtworks.map((item: any) => {
+      let finalImageUrl = item.imageUrl; // Prefer direct camelCase match
+      if (typeof finalImageUrl !== 'string' || !finalImageUrl) {
+        if (typeof item.image_url === 'string' && item.image_url) { // Fallback to snake_case
+            finalImageUrl = item.image_url;
+        } else if (item.image && typeof item.image === 'object' && typeof item.image.url === 'string' && item.image.url) { // Fallback to nested object like { image: { url: "..." } }
+            finalImageUrl = item.image.url;
+        } else if (typeof item.image === 'string' && item.image) { // Fallback if item.image itself is a string URL
+            finalImageUrl = item.image;
+        }
+      }
+
+      if (typeof finalImageUrl !== 'string' || !finalImageUrl) {
+          console.warn(`Artwork with id ${item.id || 'N/A'} has missing, invalid, or unresolvable imageUrl. Received data for image:`, {imageUrl: item.imageUrl, image_url: item.image_url, image: item.image });
+          finalImageUrl = ''; // Set to empty string if no valid URL found, to prevent undefined in src
+      }
+
+      return {
+        id: String(item.id),
+        title: item.title || "Untitled Artwork",
+        imageUrl: finalImageUrl,
+        artist: item.artist || item.artist_name, // Allow for 'artist_name' from backend
+        description: item.description || item.description_text, // Allow for 'description_text'
+        uploadDate: item.uploadDate || item.upload_date || item.created_at || new Date().toISOString(), // Check common date fields
+      };
+    });
+
     return artworks;
   } catch (error) {
     console.error('Error fetching artworks from Xano:', error);
      if (error instanceof Error && error.message.startsWith('Failed to fetch artworks:')) {
-        throw error; // Re-throw specific error
+        throw error; 
     }
     throw new Error('An unexpected error occurred while fetching artworks.');
   }
