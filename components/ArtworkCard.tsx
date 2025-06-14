@@ -17,9 +17,10 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
     }
   };
 
-  const truncatedDescription = artwork.description
-    ? artwork.description.substring(0, 100) + (artwork.description.length > 100 ? "..." : "")
-    : "No description available.";
+  // Description preview is now removed from the card.
+  // const truncatedDescription = artwork.description
+  //   ? artwork.description.substring(0, 100) + (artwork.description.length > 100 ? "..." : "")
+  //   : "No description available.";
 
   return (
     <div 
@@ -29,26 +30,24 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
       tabIndex={0} 
       role="button" 
       aria-labelledby={`artwork-title-${artwork.id}`}
-      aria-describedby={artwork.description ? `artwork-desc-${artwork.id}` : undefined}
+      // aria-describedby removed as the description preview is gone from the card
     >
-      {/* Parent div for image: 40% width, centered. Height determined by img child. */}
-      <div className="w-2/5 mx-auto mt-4 mb-2">
+      {/* Image container: 40% width, square, centered, white background */}
+      <div className="w-2/5 aspect-square mx-auto mt-4 mb-2 bg-white p-1 rounded-lg shadow-md">
         <img 
           src={artwork.imageUrl} 
           alt={artwork.title || "Artwork image"} 
-          className="block w-full h-auto object-contain bg-white p-1 rounded-lg shadow-md"
+          className="block w-full h-full object-contain" // Image fills this container
           loading="lazy"
         />
       </div>
-      <div className="p-4 md:p-5 flex flex-col flex-grow">
+      {/* Adjusted padding for text content area */}
+      <div className="p-3 md:p-4 flex flex-col flex-grow">
         <h3 id={`artwork-title-${artwork.id}`} className="text-lg font-semibold text-pink-400 mb-1 truncate text-center" title={artwork.title || "Untitled Artwork"}>
           {artwork.title || "Untitled Artwork"}
         </h3>
-        {/* Increased height for artwork description display */}
-        <p id={`artwork-desc-${artwork.id}`} className="text-xs text-slate-400 mt-1 leading-snug h-12 overflow-hidden text-center">
-          {truncatedDescription}
-        </p>
-        <div className="flex-grow mt-2"></div> {/* Spacer */}
+        {/* Description preview <p> element removed */}
+        {/* Spacer div removed */}
       </div>
     </div>
   );
