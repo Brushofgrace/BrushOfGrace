@@ -3,48 +3,19 @@ import { Artwork } from '../types';
 
 const XANO_API_ENDPOINT = process.env.XANO_API_ENDPOINT;
 
-// This is the data structure we send to Xano, after mapping from ArtworkDataPayload
-interface XanoArtworkPayload {
-  title: string;
-  image_url: string; // Snake_case for Xano
-  artist?: string;
-  image_description?: string; // Snake_case for Xano as per error
-  upload_date: string; // Snake_case for Xano
-}
-
-// This represents the expected structure from Xano's response
-interface XanoArtworkResponse {
-  id: string;
-  title: string;
-  image_url: string;
-  artist?: string;
-  image_description?: string; // Snake_case from Xano as per error
-  upload_date: string;
-  // Xano might include other fields like created_at, which we can ignore or map if needed
-  [key: string]: any; 
-}
-
+interface ArtworkDataPayload extends Omit<Artwork, 'id'> {}
 
 /**
  * Saves artwork data to the Xano backend.
- * @param artworkData The artwork data to save (using camelCase from frontend).
- * @returns A promise that resolves with the saved Artwork object (using camelCase for frontend).
+ * @param artworkData The artwork data to save (title, imageUrl, artist, description, uploadDate).
+ * @returns A promise that resolves with the saved Artwork object (including ID from Xano).
  * @throws If the save operation fails or XANO_API_ENDPOINT is not set.
  */
-export const saveArtwork = async (artworkData: Omit<Artwork, 'id'>): Promise<Artwork> => {
+export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artwork> => {
   if (!XANO_API_ENDPOINT) {
     console.error('Xano API endpoint is not configured.');
-    throw new Error('Backend service is not configured.');
+    throw new Error('Backend service for saving artwork is not configured.');
   }
-
-  // Map frontend camelCase to Xano expected format
-  const xanoPayload: XanoArtworkPayload = {
-    title: artworkData.title,
-    image_url: artworkData.imageUrl,
-    artist: artworkData.artist,
-    image_description: artworkData.description, // Map to image_description
-    upload_date: artworkData.uploadDate,
-  };
 
   try {
     const response = await fetch(XANO_API_ENDPOINT, {
@@ -52,48 +23,83 @@ export const saveArtwork = async (artworkData: Omit<Artwork, 'id'>): Promise<Art
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(xanoPayload),
+      body: JSON.stringify(artworkData),
     });
 
     if (!response.ok) {
       let errorDetails = `Status: ${response.status}`;
       try {
-        // Try to parse Xano's error message if it's JSON
         const errorData = await response.json();
-        // Xano often has a 'message' field in its error responses
         errorDetails += `, Message: ${errorData.message || JSON.stringify(errorData)}`;
       } catch (e) {
-        // If parsing as JSON fails, use the raw text body
-        errorDetails += `, Body: ${await response.text()}`;
+        // If response is not JSON or error occurs during parsing
+        const textResponse = await response.text();
+        errorDetails += `, Body: ${textResponse || 'Unable to retrieve error body.'}`;
       }
-      console.error('Xano API error:', errorDetails);
+      console.error('Xano API error (saveArtwork):', errorDetails);
       throw new Error(`Failed to save artwork: ${errorDetails}`);
     }
 
-    const xanoResponse: XanoArtworkResponse = await response.json();
-    
-    // Map Xano response back to frontend camelCase Artwork type
-    const savedArtwork: Artwork = {
-      id: xanoResponse.id,
-      title: xanoResponse.title,
-      imageUrl: xanoResponse.image_url,
-      artist: xanoResponse.artist,
-      description: xanoResponse.image_description, // Map from image_description
-      uploadDate: xanoResponse.upload_date,
-    };
-
-    // Basic validation for critical fields from Xano
-    if (!savedArtwork.id || !savedArtwork.uploadDate || !savedArtwork.imageUrl) {
-        console.warn('Xano response might be missing id, image_url, or upload_date after mapping', savedArtwork);
-        // Depending on strictness, you could throw an error here if critical data is missing
+    const savedArtwork: Artwork = await response.json();
+    if (!savedArtwork.id || !savedArtwork.uploadDate) {
+        console.warn('Xano response for saved artwork might be missing id or uploadDate', savedArtwork);
     }
     return savedArtwork;
   } catch (error) {
     console.error('Error saving artwork to Xano:', error);
-    // Ensure the error is re-thrown so it can be caught by the caller in App.tsx
-    if (error instanceof Error) {
-        throw error; // Re-throw the original error if it's already an Error instance
+    if (error instanceof Error && error.message.startsWith('Failed to save artwork:')) {
+        throw error; // Re-throw specific error
     }
-    throw new Error('An unknown error occurred while saving artwork to Xano.');
+    throw new Error('An unexpected error occurred while saving artwork.');
+  }
+};
+
+/**
+ * Fetches all artworks from the Xano backend.
+ * Assumes a GET request to the XANO_API_ENDPOINT returns a list of artworks.
+ * @returns A promise that resolves with an array of Artwork objects.
+ * @throws If the fetch operation fails or XANO_API_ENDPOINT is not set.
+ */
+export const fetchArtworksFromBackend = async (): Promise<Artwork[]> => {
+  if (!XANO_API_ENDPOINT) {
+    console.error('Xano API endpoint is not configured.');
+    throw new Error('Backend service for fetching artworks is not configured.');
+  }
+
+  try {
+    const response = await fetch(XANO_API_ENDPOINT, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      let errorDetails = `Status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorDetails += `, Message: ${errorData.message || JSON.stringify(errorData)}`;
+      } catch (e) {
+        const textResponse = await response.text();
+        errorDetails += `, Body: ${textResponse || 'Unable to retrieve error body.'}`;
+      }
+      console.error('Xano API error (fetchArtworksFromBackend):', errorDetails);
+      throw new Error(`Failed to fetch artworks: ${errorDetails}`);
+    }
+
+    const artworks: Artwork[] = await response.json();
+    // It's good practice to validate the structure of artworks if possible, 
+    // e.g., check if it's an array and items have expected properties.
+    if (!Array.isArray(artworks)) {
+        console.error('Xano API did not return an array for artworks:', artworks);
+        throw new Error('Failed to fetch artworks: Invalid data format received.');
+    }
+    return artworks;
+  } catch (error) {
+    console.error('Error fetching artworks from Xano:', error);
+     if (error instanceof Error && error.message.startsWith('Failed to fetch artworks:')) {
+        throw error; // Re-throw specific error
+    }
+    throw new Error('An unexpected error occurred while fetching artworks.');
   }
 };
