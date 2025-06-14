@@ -90,7 +90,7 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload, isUploading }) => {
     };
   }, [isPasswordModalOpen]);
 
-  const logoImageUrl = "./bog_logo.gif"; // Adjust the path as needed
+  const logoImageUrl = "/bog_logo.gif"; // Adjust the path as needed
 
   return (
     <>
