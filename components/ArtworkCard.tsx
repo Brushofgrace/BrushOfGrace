@@ -31,12 +31,12 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
       aria-labelledby={`artwork-title-${artwork.id}`}
       aria-describedby={artwork.description ? `artwork-desc-${artwork.id}` : undefined}
     >
-      {/* Outer div for sizing (40% width, square) and centering image */}
-      <div className="w-2/5 aspect-square mx-auto mt-4 mb-2 flex items-center justify-center">
+      {/* Parent div for image: 40% width, centered. Height determined by img child. */}
+      <div className="w-2/5 mx-auto mt-4 mb-2">
         <img 
           src={artwork.imageUrl} 
           alt={artwork.title || "Artwork image"} 
-          className="max-w-full max-h-full object-contain bg-white p-1 rounded-lg shadow-md"
+          className="block w-full h-auto object-contain bg-white p-1 rounded-lg shadow-md"
           loading="lazy"
         />
       </div>
