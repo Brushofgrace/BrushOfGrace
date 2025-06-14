@@ -1,8 +1,5 @@
 import React from 'react';
 
-// Hidden file input styles are no longer needed here
-// const hiddenFileInputStyles: React.CSSProperties = { ... };
-
 // HeaderProps is simplified as onArtUpload and isUploading are removed
 interface HeaderProps {
   // No props needed for now if upload is on a separate page
@@ -10,22 +7,12 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = () => {
   // Removed refs and state related to file input, password modal, and uploading
-  // const fileInputRef = useRef<HTMLInputElement>(null);
-  // const uploadButtonRef = useRef<HTMLButtonElement>(null); 
-  // const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  // const [passwordError, setPasswordError] = useState<string | null>(null);
-  // const UPLOAD_PASSWORD = process.env.UPLOAD_PASSWORD;
-
-  // Removed useEffect for UPLOAD_PASSWORD warning as it's handled in admin page
 
   const handleTitleClick = () => {
     window.location.reload();
   }
 
-  // Removed all event handlers related to upload and password modal:
-  // handleUploadArtClick, handleClosePasswordModal, handlePasswordSubmit, handleFileChange
-
-  // Removed useEffect for Escape key on password modal
+  // Removed all event handlers related to upload and password modal
 
   const logoImageUrl = "/bog_logo.gif"; 
 
@@ -50,17 +37,10 @@ const Header: React.FC<HeaderProps> = () => {
           />
         </div>
         
-        <div>
-          {/* Upload button and hidden file input are removed */}
-          {/* A placeholder or different navigation could go here if needed */}
-           <a 
-            href="/admin/" 
-            className="font-semibold py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75 bg-pink-500 hover:bg-pink-600 text-white"
-            aria-label="Go to Admin Upload Page"
-          >
-            Admin Upload
-          </a>
-        </div>
+        {/* The div containing the "Admin Upload" link has been removed. */}
+        {/* A placeholder or different navigation could go here if needed in the future,
+            but for now, this area is empty as requested. */}
+            
       </header>
       {/* PasswordModal is removed */}
     </>
