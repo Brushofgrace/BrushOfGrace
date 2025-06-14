@@ -90,7 +90,9 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload, isUploading }) => {
     };
   }, [isPasswordModalOpen]);
 
-  const logoImageUrl = "/bog_logo.gif"; // Adjust the path as needed
+  // To use a local file like "/bog_logo.gif", ensure "bog_logo.gif" 
+  // is in your "public" folder at the root of your project.
+  const logoImageUrl = "/bog_logo.gif"; 
 
   return (
     <>
@@ -109,7 +111,7 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload, isUploading }) => {
           <img 
             src={logoImageUrl} 
             alt="Brush Of Grace logo" 
-            className="h-10 md:h-12 object-contain" // Adjusted height for responsiveness
+            className="h-20 md:h-24 object-contain" // Adjusted height for responsiveness
           />
         </div>
         
