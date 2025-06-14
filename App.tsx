@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Header from './components/header';
+import Header from './components/Header';
 import ArtworkGallery from './components/ArtworkGallery';
 import ArtworkModal from './components/ArtworkModal';
 import Footer from './components/Footer'; // Import Footer
