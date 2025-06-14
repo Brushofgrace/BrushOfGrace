@@ -1,97 +1,32 @@
-import React, { useRef, useState, useEffect } from 'react';
-import PasswordModal from './PasswordModal'; // Import PasswordModal
+import React from 'react';
 
+// Hidden file input styles are no longer needed here
+// const hiddenFileInputStyles: React.CSSProperties = { ... };
+
+// HeaderProps is simplified as onArtUpload and isUploading are removed
 interface HeaderProps {
-  onArtUpload: (file: File) => void;
-  isUploading: boolean; // New prop
+  // No props needed for now if upload is on a separate page
 }
 
-const hiddenFileInputStyles: React.CSSProperties = {
-  position: 'absolute',
-  width: '1px',
-  height: '1px',
-  margin: '-1px', // To prevent the 1px box from affecting layout
-  padding: '0',
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  border: '0',
-  whiteSpace: 'nowrap', // Ensure content doesn't cause unexpected line breaks
-};
+const Header: React.FC<HeaderProps> = () => {
+  // Removed refs and state related to file input, password modal, and uploading
+  // const fileInputRef = useRef<HTMLInputElement>(null);
+  // const uploadButtonRef = useRef<HTMLButtonElement>(null); 
+  // const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  // const [passwordError, setPasswordError] = useState<string | null>(null);
+  // const UPLOAD_PASSWORD = process.env.UPLOAD_PASSWORD;
 
-
-const Header: React.FC<HeaderProps> = ({ onArtUpload, isUploading }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadButtonRef = useRef<HTMLButtonElement>(null); // Ref for the upload button
-  
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-
-  // Read password from environment variable. Fallback to '1936' if not set.
-  const UPLOAD_PASSWORD = process.env.UPLOAD_PASSWORD;
-
-  useEffect(() => {
-    if (!UPLOAD_PASSWORD) {
-      console.warn("UPLOAD_PASSWORD is not set in environment variables. Falling back to default '1936'. It's recommended to set this for security.");
-    }
-  }, [UPLOAD_PASSWORD]);
+  // Removed useEffect for UPLOAD_PASSWORD warning as it's handled in admin page
 
   const handleTitleClick = () => {
     window.location.reload();
   }
 
-  const handleUploadArtClick = () => {
-    if (isUploading) return; // Prevent action if already uploading
-    setPasswordError(null); // Clear previous errors
-    setIsPasswordModalOpen(true);
-  };
+  // Removed all event handlers related to upload and password modal:
+  // handleUploadArtClick, handleClosePasswordModal, handlePasswordSubmit, handleFileChange
 
-  const handleClosePasswordModal = () => {
-    setIsPasswordModalOpen(false);
-    // Return focus to the upload button when modal is closed
-    uploadButtonRef.current?.focus(); 
-  };
+  // Removed useEffect for Escape key on password modal
 
-  const handlePasswordSubmit = (password: string) => {
-    const correctPassword = UPLOAD_PASSWORD || '1936'; // Use env password or fallback
-    if (password === correctPassword) {
-      setIsPasswordModalOpen(false);
-      // Return focus to the upload button briefly before triggering file input
-      uploadButtonRef.current?.focus(); 
-      setTimeout(() => { // Timeout to allow focus to settle before file dialog
-        fileInputRef.current?.click();
-      }, 0);
-      setPasswordError(null);
-    } else {
-      setPasswordError("Incorrect password. Please try again.");
-      // PasswordModal's own focus logic handles focusing input on error
-    }
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      onArtUpload(file);
-      // Reset file input to allow selecting the same file again if needed
-      if(fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isPasswordModalOpen) {
-        handleClosePasswordModal();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isPasswordModalOpen]);
-
-  // To use a local file like "/bog_logo.gif", ensure "bog_logo.gif" 
-  // is in your "public" folder at the root of your project.
   const logoImageUrl = "/bog_logo.gif"; 
 
   return (
@@ -111,44 +46,23 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload, isUploading }) => {
           <img 
             src={logoImageUrl} 
             alt="Brush Of Grace logo" 
-            className="h-20 md:h-24 object-contain" // Adjusted height for responsiveness
+            className="h-20 md:h-24 object-contain"
           />
         </div>
         
         <div>
-          <input 
-            type="file" 
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/png, image/jpeg, image/gif"
-            style={hiddenFileInputStyles}
-            aria-label="Select art file for upload"
-            tabIndex={-1}
-            disabled={isUploading} // Disable file input as well
-          />
-          <button
-            ref={uploadButtonRef}
-            onClick={handleUploadArtClick}
-            className={`font-semibold py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75 ${
-              isUploading 
-                ? 'bg-slate-500 text-slate-300 cursor-not-allowed' 
-                : 'bg-pink-500 hover:bg-pink-600 text-white'
-            }`}
-            aria-label="Upload new artwork"
-            disabled={isUploading}
+          {/* Upload button and hidden file input are removed */}
+          {/* A placeholder or different navigation could go here if needed */}
+           <a 
+            href="/admin/" 
+            className="font-semibold py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75 bg-pink-500 hover:bg-pink-600 text-white"
+            aria-label="Go to Admin Upload Page"
           >
-            {isUploading ? 'Processing...' : 'Upload Art'}
-          </button>
+            Admin Upload
+          </a>
         </div>
       </header>
-      {isPasswordModalOpen && (
-        <PasswordModal
-          isOpen={isPasswordModalOpen}
-          onClose={handleClosePasswordModal}
-          onSubmit={handlePasswordSubmit}
-          errorMessage={passwordError}
-        />
-      )}
+      {/* PasswordModal is removed */}
     </>
   );
 };

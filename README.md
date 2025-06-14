@@ -23,10 +23,17 @@ This contains everything you need to run your app locally.
     -   `IMGUR_CLIENT_ID`: Your Client ID for the Imgur API, used for image uploads.
     -   `XANO_SAVE_ARTWORK_ENDPOINT`: The full URL to your Xano backend endpoint used to **create/save (POST)** new artwork data.
     -   `XANO_GET_ARTWORKS_ENDPOINT`: The full URL to your Xano backend endpoint used to **retrieve (GET)** all artwork data.
-    -   `UPLOAD_PASSWORD`: A password you choose to protect the artwork upload functionality.
+    -   `UPLOAD_PASSWORD`: A password you choose to protect the artwork upload functionality on the admin page.
 
 4.  Run the app:
     `npm run dev`
+
+    The main gallery will be available at your local development server URL (e.g., `http://localhost:5173/`).
+    The artwork upload page will be available at `/admin/` (e.g., `http://localhost:5173/admin/`).
+
+## Admin Upload Page
+
+Artwork uploading is now handled on a separate admin page, typically accessible at `/admin/index.html` or `/admin/`. This page requires the `UPLOAD_PASSWORD` to access the upload functionality.
 
 ## Contact Form
 

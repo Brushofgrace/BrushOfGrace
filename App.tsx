@@ -6,17 +6,17 @@ import Footer from './components/Footer';
 import { Artwork } from './types';
 // Removed sampleArtworks import as it's no longer used as a primary data source
 
-// Import new services
-import { uploadImage } from './services/imageUploadService';
-import { generateDescription } from './services/aiDescriptionService';
-import { saveArtwork, fetchArtworksFromBackend } from './services/artworkService'; // Added fetchArtworksFromBackend
+// Import services needed for displaying artworks
+import { fetchArtworksFromBackend } from './services/artworkService'; 
+// Services for upload (uploadImage, generateDescription, saveArtwork) are no longer directly used by App.tsx
 
 const App: React.FC = () => {
   const [userUploadedArtworks, setUserUploadedArtworks] = useState<Artwork[]>([]);
   const [selectedArtworkForModal, setSelectedArtworkForModal] = useState<Artwork | null>(null);
 
-  const [isProcessingUpload, setIsProcessingUpload] = useState(false);
-  const [uploadStatusMessage, setUploadStatusMessage] = useState<string | null>(null);
+  // Removed state related to upload processing, as it's now on the admin page
+  // const [isProcessingUpload, setIsProcessingUpload] = useState(false);
+  // const [uploadStatusMessage, setUploadStatusMessage] = useState<string | null>(null);
 
   const [isLoadingArtworks, setIsLoadingArtworks] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -38,42 +38,7 @@ const App: React.FC = () => {
     loadArtworks();
   }, []);
 
-  const handleArtUpload = async (file: File) => {
-    setIsProcessingUpload(true);
-    setUploadStatusMessage("Starting artwork processing...");
-    const originalFileName = file.name.split('.').slice(0, -1).join('.') || "Untitled Artwork";
-
-    try {
-      setUploadStatusMessage("Uploading image to gallery...");
-      const imageUrl = await uploadImage(file);
-
-      setUploadStatusMessage("Generating AI description...");
-      const description = await generateDescription(file, originalFileName);
-
-      const artworkDataToSave: Omit<Artwork, 'id'> = {
-        title: originalFileName,
-        imageUrl: imageUrl,
-        artist: "Current User", 
-        description: description,
-        uploadDate: new Date().toISOString(),
-      };
-
-      setUploadStatusMessage("Saving artwork details...");
-      const savedArtwork = await saveArtwork(artworkDataToSave);
-
-      setUserUploadedArtworks(prevArtworks => [savedArtwork, ...prevArtworks].sort((a,b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()));
-      setUploadStatusMessage("Artwork added successfully!");
-      setTimeout(() => setUploadStatusMessage(null), 5000);
-
-    } catch (error: any) {
-      console.error("Art upload process failed:", error);
-      const displayErrorMessage = error?.message || "An unknown error occurred during upload.";
-      setUploadStatusMessage(`Error: ${displayErrorMessage}`);
-      setTimeout(() => setUploadStatusMessage(null), 8000); 
-    } finally {
-      setIsProcessingUpload(false);
-    }
-  };
+  // Removed handleArtUpload function as it's now handled by the admin page
 
   const handleArtworkCardClick = (artwork: Artwork) => {
     setSelectedArtworkForModal(artwork);
@@ -101,7 +66,6 @@ const App: React.FC = () => {
     };
   }, [selectedArtworkForModal]);
 
-  // Artworks to display are now solely from userUploadedArtworks (which is fetched from backend)
   const artworksToDisplay = userUploadedArtworks;
 
   const renderMainContent = () => {
@@ -131,13 +95,12 @@ const App: React.FC = () => {
       return <ArtworkGallery artworks={artworksToDisplay} onArtworkClick={handleArtworkCardClick} />;
     }
 
-    // If not loading, no error, and no artworks
     return (
       <div className="flex-grow flex flex-col items-center justify-center p-4 min-h-[calc(100vh-200px)]">
         <div className="text-center">
           <h2 className="text-2xl font-semibold text-slate-300 mb-4">Welcome to Brush Of Grace</h2>
           <p className="text-slate-400">Your gallery is currently empty.</p>
-          <p className="text-slate-400 mt-2">Use the "Upload Art" button in the header to add your creations.</p>
+          <p className="text-slate-400 mt-2">Visit the Admin Upload page to add your creations.</p> 
         </div>
       </div>
     );
@@ -145,17 +108,10 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#808080] text-slate-200">
-      <Header onArtUpload={handleArtUpload} isUploading={isProcessingUpload} />
+      {/* Header no longer takes onArtUpload or isUploading props */}
+      <Header /> 
       
-      {uploadStatusMessage && (
-        <div 
-          className={`p-3 text-center text-sm font-medium ${uploadStatusMessage.startsWith('Error:') ? 'bg-red-500 text-white' : 'bg-pink-500 text-white'}`}
-          role="status"
-          aria-live="polite"
-        >
-          {uploadStatusMessage}
-        </div>
-      )}
+      {/* Upload status message display is removed from here */}
 
       <main className="flex-grow flex flex-col">
         {renderMainContent()}
