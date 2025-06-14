@@ -2,13 +2,13 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Artwork } from '../types'; // Assuming Artwork type might be useful or for context
 
-const API_KEY = process.env.API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Changed from API_KEY
 
-if (!API_KEY) {
-  throw new Error("API_KEY for Gemini is not defined in environment variables.");
+if (!GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY for Gemini is not defined in environment variables.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY }); // Use the corrected variable
 const model = 'gemini-2.5-flash-preview-04-17'; // Vision capable model
 
 // Helper function to convert File to base64 for Gemini API
