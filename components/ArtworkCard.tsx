@@ -17,20 +17,14 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
     }
   };
 
-  // Description preview is now removed from the card.
-  // const truncatedDescription = artwork.description
-  //   ? artwork.description.substring(0, 100) + (artwork.description.length > 100 ? "..." : "")
-  //   : "No description available.";
-
   return (
     <div 
-      className="bg-slate-700 rounded-lg shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl flex flex-col cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-75"
+      className="bg-slate-700 rounded-lg shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl flex flex-col cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-75 w-full max-w-sm mx-auto"
       onClick={handleCardClick}
       onKeyPress={handleKeyPress}
       tabIndex={0} 
       role="button" 
       aria-labelledby={`artwork-title-${artwork.id}`}
-      // aria-describedby removed as the description preview is gone from the card
     >
       {/* Image container: 40% width, square, centered, white background */}
       <div className="w-2/5 aspect-square mx-auto mt-4 mb-2 bg-white p-1 rounded-lg shadow-md">
@@ -46,8 +40,6 @@ const ArtworkCard: React.FC<ArtworkCardProps> = ({ artwork, onClick }) => {
         <h3 id={`artwork-title-${artwork.id}`} className="text-lg font-semibold text-pink-400 mb-1 truncate text-center" title={artwork.title || "Untitled Artwork"}>
           {artwork.title || "Untitled Artwork"}
         </h3>
-        {/* Description preview <p> element removed */}
-        {/* Spacer div removed */}
       </div>
     </div>
   );
