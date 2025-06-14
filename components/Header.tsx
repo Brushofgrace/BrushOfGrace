@@ -3,6 +3,7 @@ import PasswordModal from './PasswordModal'; // Import PasswordModal
 
 interface HeaderProps {
   onArtUpload: (file: File) => void;
+  isUploading: boolean; // New prop
 }
 
 const hiddenFileInputStyles: React.CSSProperties = {
@@ -18,18 +19,28 @@ const hiddenFileInputStyles: React.CSSProperties = {
 };
 
 
-const Header: React.FC<HeaderProps> = ({ onArtUpload }) => {
+const Header: React.FC<HeaderProps> = ({ onArtUpload, isUploading }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadButtonRef = useRef<HTMLButtonElement>(null); // Ref for the upload button
   
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
+  // Read password from environment variable. Fallback to '1936' if not set.
+  const UPLOAD_PASSWORD = process.env.UPLOAD_PASSWORD;
+
+  useEffect(() => {
+    if (!UPLOAD_PASSWORD) {
+      console.warn("UPLOAD_PASSWORD is not set in environment variables. Falling back to default '1936'. It's recommended to set this for security.");
+    }
+  }, [UPLOAD_PASSWORD]);
+
   const handleTitleClick = () => {
     window.location.reload();
   }
 
   const handleUploadArtClick = () => {
+    if (isUploading) return; // Prevent action if already uploading
     setPasswordError(null); // Clear previous errors
     setIsPasswordModalOpen(true);
   };
@@ -41,7 +52,8 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload }) => {
   };
 
   const handlePasswordSubmit = (password: string) => {
-    if (password === '1936') {
+    const correctPassword = UPLOAD_PASSWORD || '1936'; // Use env password or fallback
+    if (password === correctPassword) {
       setIsPasswordModalOpen(false);
       // Return focus to the upload button briefly before triggering file input
       uploadButtonRef.current?.focus(); 
@@ -51,8 +63,7 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload }) => {
       setPasswordError(null);
     } else {
       setPasswordError("Incorrect password. Please try again.");
-      // Explicitly focus the password input again on error for better UX
-      // This will be handled by PasswordModal's own focus logic if it re-renders with error
+      // PasswordModal's own focus logic handles focusing input on error
     }
   };
 
@@ -84,7 +95,7 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload }) => {
     <>
       <header 
         className="py-4 px-6 flex justify-between items-center shadow-lg"
-        style={{ background: 'linear-gradient(135deg, #ff00cc 0%, #3333ff 50%, #00ffcc 100%)' }} // Updated vibrant gradient
+        style={{ background: 'linear-gradient(135deg, #ff00cc 0%, #3333ff 50%, #00ffcc 100%)' }}
       >
         <h1 
           className="text-4xl font-bold text-white cursor-pointer hover:opacity-90 transition-opacity"
@@ -102,17 +113,23 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload }) => {
             ref={fileInputRef}
             onChange={handleFileChange}
             accept="image/png, image/jpeg, image/gif"
-            style={hiddenFileInputStyles} // Use inline styles to hide
+            style={hiddenFileInputStyles}
             aria-label="Select art file for upload"
-            tabIndex={-1} // Ensure it's not focusable directly
+            tabIndex={-1}
+            disabled={isUploading} // Disable file input as well
           />
           <button
-            ref={uploadButtonRef} // Assign ref to the button
+            ref={uploadButtonRef}
             onClick={handleUploadArtClick}
-            className="bg-pink-500 hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75"
+            className={`font-semibold py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75 ${
+              isUploading 
+                ? 'bg-slate-500 text-slate-300 cursor-not-allowed' 
+                : 'bg-pink-500 hover:bg-pink-600 text-white'
+            }`}
             aria-label="Upload new artwork"
+            disabled={isUploading}
           >
-            Upload Art
+            {isUploading ? 'Processing...' : 'Upload Art'}
           </button>
         </div>
       </header>
