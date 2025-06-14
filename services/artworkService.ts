@@ -7,7 +7,22 @@ const XANO_GET_ARTWORKS_ENDPOINT = process.env.XANO_GET_ARTWORKS_ENDPOINT;
 interface ArtworkDataPayload extends Omit<Artwork, 'id'> {}
 
 /**
+ * Extracts a title from a description string if it's formatted as **Title Here**.
+ * @param description The description string.
+ * @returns The extracted title or null if not found.
+ */
+const extractTitleFromDescription = (description: string): string | null => {
+  if (!description) return null;
+  const match = description.match(/\*\*(.*?)\*\*/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return null;
+};
+
+/**
  * Saves artwork data to the Xano backend.
+ * Extracts title from description if formatted as **Title**.
  * @param artworkData The artwork data to save (title, imageUrl, artist, description, uploadDate).
  * @returns A promise that resolves with the saved Artwork object (including ID from Xano).
  * @throws If the save operation fails or XANO_SAVE_ARTWORK_ENDPOINT is not set.
@@ -18,13 +33,22 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
     throw new Error('Backend service for saving artwork is not configured (SAVE endpoint missing).');
   }
 
+  // Attempt to extract title from description
+  const extractedTitle = extractTitleFromDescription(artworkData.description || "");
+  const finalTitle = extractedTitle || artworkData.title; // Use extracted title or fallback to original
+
+  const payloadToSave = {
+    ...artworkData,
+    title: finalTitle,
+  };
+
   try {
     const response = await fetch(XANO_SAVE_ARTWORK_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(artworkData), // Assumes Xano can handle camelCase or has input mapping
+      body: JSON.stringify(payloadToSave), 
     });
 
     if (!response.ok) {
@@ -40,16 +64,14 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
       throw new Error(`Failed to save artwork: ${errorDetails}`);
     }
 
-    // Assuming Xano returns the created object, potentially with an 'id' and matching our Artwork structure.
-    // If Xano returns fields in snake_case, mapping would be needed here too for consistency.
     const savedArtworkResponse: any = await response.json(); 
     const savedArtwork: Artwork = {
         id: String(savedArtworkResponse.id),
-        title: savedArtworkResponse.title || artworkData.title,
-        imageUrl: savedArtworkResponse.imageUrl || artworkData.imageUrl,
-        artist: savedArtworkResponse.artist || artworkData.artist,
-        description: savedArtworkResponse.description || artworkData.description,
-        uploadDate: savedArtworkResponse.uploadDate || artworkData.uploadDate,
+        title: savedArtworkResponse.title || payloadToSave.title, // Ensure title consistency
+        imageUrl: savedArtworkResponse.imageUrl || payloadToSave.imageUrl,
+        artist: savedArtworkResponse.artist || payloadToSave.artist,
+        description: savedArtworkResponse.description || payloadToSave.description || "", // Ensure description is string
+        uploadDate: savedArtworkResponse.uploadDate || payloadToSave.uploadDate,
     };
     
     if (!savedArtwork.id) {
@@ -106,29 +128,29 @@ export const fetchArtworksFromBackend = async (): Promise<Artwork[]> => {
     }
     
     const artworks: Artwork[] = rawArtworks.map((item: any) => {
-      let finalImageUrl = item.imageUrl; // Prefer direct camelCase match
+      let finalImageUrl = item.imageUrl; 
       if (typeof finalImageUrl !== 'string' || !finalImageUrl) {
-        if (typeof item.image_url === 'string' && item.image_url) { // Fallback to snake_case
+        if (typeof item.image_url === 'string' && item.image_url) { 
             finalImageUrl = item.image_url;
-        } else if (item.image && typeof item.image === 'object' && typeof item.image.url === 'string' && item.image.url) { // Fallback to nested object like { image: { url: "..." } }
+        } else if (item.image && typeof item.image === 'object' && typeof item.image.url === 'string' && item.image.url) { 
             finalImageUrl = item.image.url;
-        } else if (typeof item.image === 'string' && item.image) { // Fallback if item.image itself is a string URL
+        } else if (typeof item.image === 'string' && item.image) { 
             finalImageUrl = item.image;
         }
       }
 
       if (typeof finalImageUrl !== 'string' || !finalImageUrl) {
           console.warn(`Artwork with id ${item.id || 'N/A'} has missing, invalid, or unresolvable imageUrl. Received data for image:`, {imageUrl: item.imageUrl, image_url: item.image_url, image: item.image });
-          finalImageUrl = ''; // Set to empty string if no valid URL found, to prevent undefined in src
+          finalImageUrl = ''; 
       }
 
       return {
-        id: String(item.id),
-        title: item.title || "Untitled Artwork",
+        id: String(item.id || Math.random().toString(36).substring(7)), // Fallback ID for safety
+        title: item.title || "Untitled Artwork", // Ensure title is always a string
         imageUrl: finalImageUrl,
-        artist: item.artist || item.artist_name, // Allow for 'artist_name' from backend
-        description: item.description || item.description_text, // Allow for 'description_text'
-        uploadDate: item.uploadDate || item.upload_date || item.created_at || new Date().toISOString(), // Check common date fields
+        artist: item.artist || item.artist_name, 
+        description: item.description || item.description_text || "", // Ensure description is always a string
+        uploadDate: item.uploadDate || item.upload_date || item.created_at || new Date().toISOString(), 
       };
     });
 

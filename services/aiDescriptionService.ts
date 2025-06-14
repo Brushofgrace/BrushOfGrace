@@ -35,15 +35,20 @@ const fileToGenerativePart = (file: File): Promise<{ inlineData: { data: string,
 
 /**
  * Generates a description for an artwork image using Gemini API.
+ * Instructs AI to embed a title within the description using **Title Here** format.
  * @param imageFile The image file.
- * @param title The title of the artwork.
+ * @param originalTitle The original/filename-derived title of the artwork, used as context.
  * @returns A promise that resolves with the AI-generated description.
  */
-export const generateDescription = async (imageFile: File, title: string): Promise<string> => {
+export const generateDescription = async (imageFile: File, originalTitle: string): Promise<string> => {
   try {
     const imagePart = await fileToGenerativePart(imageFile);
     const textPart = {
-      text: `Describe this artwork titled "${title}". Focus on its visual elements, style, potential mood, and theme. Provide a concise yet evocative description suitable for a gallery.`,
+      text: `Analyze the following artwork. 
+      First, create a concise and creative title for this artwork and enclose it in double asterisks, like this: **Creative Artwork Title**.
+      Then, provide a detailed description. Focus on its visual elements, style, potential mood, and theme. 
+      The original filename was "${originalTitle}". You can use this for inspiration or ignore it if you come up with a better title.
+      The description should be suitable for a gallery.`,
     };
 
     const response: GenerateContentResponse = await ai.models.generateContent({
