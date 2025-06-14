@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-interface FormData {
+interface FormDataState { // Renamed from FormData to avoid conflict with built-in FormData
   name: string;
   email: string;
   message: string;
@@ -12,8 +12,10 @@ interface FormErrors {
   message?: string;
 }
 
+const FORM_NAME = "contact"; // Define form name
+
 const ContactForm: React.FC = () => {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<FormDataState>({
     name: '',
     email: '',
     message: '',
@@ -21,12 +23,16 @@ const ContactForm: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+    if (submissionError) {
+      setSubmissionError(null); // Clear submission error on new input
     }
   };
 
@@ -42,9 +48,11 @@ const ContactForm: React.FC = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitted(false);
+    setSubmissionError(null);
+
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -52,20 +60,40 @@ const ContactForm: React.FC = () => {
     }
     
     setIsSubmitting(true);
-    // Simulate API call
-    console.log('Form data submitted:', formData);
-    setTimeout(() => {
+
+    const formElement = e.target as HTMLFormElement;
+    const netlifyFormData = new FormData(formElement);
+    // Note: 'form-name' is already included via hidden input
+
+    try {
+      const response = await fetch('/', { // Netlify forms process submissions to the current path
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(netlifyFormData as any).toString(),
+      });
+
+      if (!response.ok) {
+        // For Netlify AJAX, a non-200 response usually means an issue.
+        // It's often best to check Netlify's network tab for specific responses if errors occur.
+        // A generic error is provided here.
+        throw new Error("An error occurred while sending your message. Please try again or contact support if the issue persists.");
+      }
+
+      // Success
       setIsSubmitted(true);
-      setFormData({ name: '', email: '', message: '' });
-      setErrors({});
+      setFormData({ name: '', email: '', message: '' }); // Clear form
+      setErrors({}); // Clear validation errors
+    } catch (error: any) {
+      setSubmissionError(error.message || "Failed to send message. Please check your connection or try again.");
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   useEffect(() => {
-    let timer: number; // Changed NodeJS.Timeout to number
+    let timer: number;
     if (isSubmitted) {
-      timer = window.setTimeout(() => { // Used window.setTimeout for clarity
+      timer = window.setTimeout(() => {
         setIsSubmitted(false);
       }, 5000); // Success message disappears after 5 seconds
     }
@@ -82,7 +110,29 @@ const ContactForm: React.FC = () => {
           Message sent successfully! We'll be in touch soon.
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-6 bg-slate-800 p-6 sm:p-8 rounded-lg shadow-xl">
+      {submissionError && (
+        <div className="mb-4 p-3 bg-red-600 text-white rounded-md text-center transition-opacity duration-300 ease-in-out" role="alert">
+          {submissionError}
+        </div>
+      )}
+      {/* Netlify form attributes added */}
+      <form 
+        name={FORM_NAME} 
+        method="POST" 
+        data-netlify="true" 
+        data-netlify-honeypot="bot-field"
+        onSubmit={handleSubmit} 
+        className="space-y-6 bg-slate-800 p-6 sm:p-8 rounded-lg shadow-xl"
+      >
+        {/* Hidden input for Netlify to identify the form */}
+        <input type="hidden" name="form-name" value={FORM_NAME} />
+        {/* Honeypot field for spam prevention */}
+        <p className="hidden"> {/* Visually hide but still part of the form */}
+          <label>
+            Don’t fill this out if you’re human: <input name="bot-field" onChange={handleChange} />
+          </label>
+        </p>
+
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1">
             Full Name

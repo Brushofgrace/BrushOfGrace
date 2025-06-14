@@ -27,3 +27,9 @@ This contains everything you need to run your app locally.
 
 4.  Run the app:
     `npm run dev`
+
+## Contact Form
+
+The contact form in the artwork modal uses Netlify Forms.
+- When you deploy to Netlify, a form named "contact" will be automatically detected.
+- You can view submissions and configure email notifications for this form in your Netlify site dashboard under the "Forms" section. Make sure to set up notifications to `brushofgraceinfo@gmail.com`.
