@@ -20,19 +20,35 @@
       }
     </style>
     <script type="importmap">
-      {
-        "imports": {
-          "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
-          "react/": "https://esm.sh/react@^19.1.0/",
-          "react": "https://esm.sh/react@^19.1.0",
-          "@google/genai": "https://esm.sh/@google/genai"
-        }
-      }
-    </script>
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "@google/genai": "https://esm.sh/@google/genai",
+    "path": "https://esm.sh/path@^0.12.7",
+    "vite": "https://esm.sh/vite@^6.3.5"
+  }
+}
+</script>
   <link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
+
+    <!-- Hidden Netlify form for detection. This does not replace the React form. -->
+    <form name="contact" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="contact" />
+      <p style="display:none;"> {/* Visually hide but still part of the form for honeypot */}
+        <label>
+          Don’t fill this out if you’re human: <input name="bot-field" />
+        </label>
+      </p>
+      <label>Name: <input type="text" name="name" /></label>
+      <label>Email: <input type="email" name="email" /></label>
+      <label>Message: <textarea name="message"></textarea></label>
+    </form>
+
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
