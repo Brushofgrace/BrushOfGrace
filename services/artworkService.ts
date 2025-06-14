@@ -8,7 +8,7 @@ interface XanoArtworkPayload {
   title: string;
   image_url: string; // Snake_case for Xano
   artist?: string;
-  description?: string;
+  image_description?: string; // Snake_case for Xano as per error
   upload_date: string; // Snake_case for Xano
 }
 
@@ -18,7 +18,7 @@ interface XanoArtworkResponse {
   title: string;
   image_url: string;
   artist?: string;
-  description?: string;
+  image_description?: string; // Snake_case from Xano as per error
   upload_date: string;
   // Xano might include other fields like created_at, which we can ignore or map if needed
   [key: string]: any; 
@@ -37,12 +37,12 @@ export const saveArtwork = async (artworkData: Omit<Artwork, 'id'>): Promise<Art
     throw new Error('Backend service is not configured.');
   }
 
-  // Map frontend camelCase to Xano snake_case
+  // Map frontend camelCase to Xano expected format
   const xanoPayload: XanoArtworkPayload = {
     title: artworkData.title,
     image_url: artworkData.imageUrl,
     artist: artworkData.artist,
-    description: artworkData.description,
+    image_description: artworkData.description, // Map to image_description
     upload_date: artworkData.uploadDate,
   };
 
@@ -72,13 +72,13 @@ export const saveArtwork = async (artworkData: Omit<Artwork, 'id'>): Promise<Art
 
     const xanoResponse: XanoArtworkResponse = await response.json();
     
-    // Map Xano snake_case response back to frontend camelCase Artwork type
+    // Map Xano response back to frontend camelCase Artwork type
     const savedArtwork: Artwork = {
       id: xanoResponse.id,
       title: xanoResponse.title,
       imageUrl: xanoResponse.image_url,
       artist: xanoResponse.artist,
-      description: xanoResponse.description,
+      description: xanoResponse.image_description, // Map from image_description
       uploadDate: xanoResponse.upload_date,
     };
 
