@@ -11,7 +11,7 @@ interface ArtworkDataPayload extends Omit<Artwork, 'id'> {}
  * @param description The description string.
  * @returns The extracted title or null if not found.
  */
-const extractTitleFromDescription = (description: string): string | null => {
+const extractTitleFromDescription = (description: string | undefined | null): string | null => {
   if (!description) return null;
   const match = description.match(/\*\*(.*?)\*\*/);
   if (match && match[1]) {
@@ -35,14 +35,14 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
   }
 
   const extractedTitle = extractTitleFromDescription(artworkData.description || "");
-  const finalTitle = extractedTitle || artworkData.title;
+  const finalTitle = extractedTitle || artworkData.title; // Fallback to original filename based title if AI doesn't provide one
 
   // Prepare payload with 'image_description' for Xano
   const payloadToSave = {
-    title: finalTitle,
+    title: finalTitle, // Send extracted/filename title to Xano's 'title' field
     imageUrl: artworkData.imageUrl,
     artist: artworkData.artist,
-    image_description: artworkData.description || "", // Use image_description key
+    image_description: artworkData.description || "", // Send full AI description to 'image_description'
     uploadDate: artworkData.uploadDate,
   };
 
@@ -69,18 +69,19 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
     }
 
     const savedArtworkResponse: any = await response.json(); 
-    // Map response back to frontend Artwork type, looking for image_description
+    // Construct the artwork object for the frontend.
+    // Prioritize the 'finalTitle' we determined and intended to save.
     const savedArtwork: Artwork = {
-        id: String(savedArtworkResponse.id),
-        title: savedArtworkResponse.title || finalTitle,
+        id: String(savedArtworkResponse.id), // ID must come from Xano's response
+        title: finalTitle, // Use the title we determined and intended to save
         imageUrl: savedArtworkResponse.imageUrl || artworkData.imageUrl,
         artist: savedArtworkResponse.artist || artworkData.artist,
-        description: savedArtworkResponse.image_description || savedArtworkResponse.description || artworkData.description || "", // Prioritize image_description
+        description: savedArtworkResponse.image_description || savedArtworkResponse.description || artworkData.description || "",
         uploadDate: savedArtworkResponse.uploadDate || artworkData.uploadDate,
     };
     
     if (!savedArtwork.id) {
-        console.warn('Xano response for saved artwork might be missing id', savedArtwork);
+        console.warn('Xano response for saved artwork might be missing id', savedArtworkResponse);
     }
     return savedArtwork;
   } catch (error) {
@@ -94,7 +95,7 @@ export const saveArtwork = async (artworkData: ArtworkDataPayload): Promise<Artw
 
 /**
  * Fetches all artworks from the Xano backend.
- * Prioritizes 'image_description' field for descriptions.
+ * Derives the title by parsing 'image_description'.
  * @returns A promise that resolves with an array of Artwork objects.
  * @throws If the fetch operation fails or XANO_GET_ARTWORKS_ENDPOINT is not set.
  */
@@ -149,13 +150,14 @@ export const fetchArtworksFromBackend = async (): Promise<Artwork[]> => {
           finalImageUrl = ''; 
       }
       
-      const artworkTitle = item.title || "Untitled Artwork";
-      // Prioritize image_description for fetching
       const artworkDescription = item.image_description || item.description || item.description_text || item.details || item.summary || item.notes || item.artwork_description || "";
+      
+      // Derive title from description
+      const artworkTitle = extractTitleFromDescription(artworkDescription) || "Untitled Artwork";
 
       return {
         id: String(item.id || Math.random().toString(36).substring(7)), 
-        title: artworkTitle,
+        title: artworkTitle, // Title is now derived from description
         imageUrl: finalImageUrl,
         artist: item.artist || item.artist_name, 
         description: artworkDescription, 
