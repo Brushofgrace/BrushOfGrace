@@ -90,6 +90,7 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload, isUploading }) => {
     };
   }, [isPasswordModalOpen]);
 
+  const logoImageUrl = "./bog_logo.gif"; // Adjust the path as needed
 
   return (
     <>
@@ -97,15 +98,20 @@ const Header: React.FC<HeaderProps> = ({ onArtUpload, isUploading }) => {
         className="py-4 px-6 flex justify-between items-center shadow-lg"
         style={{ background: 'linear-gradient(135deg, #ff00cc 0%, #3333ff 50%, #00ffcc 100%)' }}
       >
-        <h1 
-          className="text-4xl font-bold text-white cursor-pointer hover:opacity-90 transition-opacity"
+        <div
           onClick={handleTitleClick}
-          aria-label="Brush Of Grace, click to refresh page"
-          tabIndex={0}
           onKeyPress={(e) => e.key === 'Enter' && handleTitleClick()}
+          className="cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75 rounded"
+          tabIndex={0}
+          aria-label="Brush Of Grace logo, click to refresh page"
+          role="button"
         >
-          Brush Of Grace
-        </h1>
+          <img 
+            src={logoImageUrl} 
+            alt="Brush Of Grace logo" 
+            className="h-10 md:h-12 object-contain" // Adjusted height for responsiveness
+          />
+        </div>
         
         <div>
           <input 
