@@ -190,12 +190,12 @@ export const deleteArtwork = async (id: string | number): Promise<void> => {
   }
 
   try {
-    const url = `${XANO_DELETE_ARTWORK_ENDPOINT}/${id}`;
-    const response = await fetch(url, {
+    const response = await fetch(XANO_DELETE_ARTWORK_ENDPOINT, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ id: Number(id) }),
     });
 
     if (!response.ok) {
