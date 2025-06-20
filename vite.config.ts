@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
         'process.env.IMGUR_CLIENT_ID': JSON.stringify(env.IMGUR_CLIENT_ID),
         'process.env.XANO_SAVE_ARTWORK_ENDPOINT': JSON.stringify(env.XANO_SAVE_ARTWORK_ENDPOINT),
         'process.env.XANO_GET_ARTWORKS_ENDPOINT': JSON.stringify(env.XANO_GET_ARTWORKS_ENDPOINT),
+        'process.env.XANO_DELETE_ARTWORK_ENDPOINT': JSON.stringify(env.XANO_DELETE_ARTWORK_ENDPOINT),
         'process.env.UPLOAD_PASSWORD': JSON.stringify(env.UPLOAD_PASSWORD),
       },
       resolve: {
