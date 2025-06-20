@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { uploadImage } from '../services/imageUploadService';
 import { generateDescription } from '../services/aiDescriptionService';
-import { saveArtwork } from '../services/artworkService';
+import { saveArtwork, fetchArtworksFromBackend, deleteArtwork } from '../services/artworkService';
 import { Artwork } from '../types';
 
 const AdminUploadPage: React.FC = () => {
@@ -15,6 +15,10 @@ const AdminUploadPage: React.FC = () => {
   const [uploadStatusMessage, setUploadStatusMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [artworks, setArtworks] = useState<Artwork[]>([]);
+  const [isLoadingArtworks, setIsLoadingArtworks] = useState(false);
+  const [artworkError, setArtworkError] = useState<string | null>(null);
+
   const UPLOAD_PASSWORD = process.env.UPLOAD_PASSWORD;
 
   useEffect(() => {
@@ -23,6 +27,13 @@ const AdminUploadPage: React.FC = () => {
       // It's crucial UPLOAD_PASSWORD is set for this page to work.
     }
   }, [UPLOAD_PASSWORD]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadArtworks();
+    }
+    // eslint-disable-next-line
+  }, [isAuthenticated]);
 
   const handlePasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -94,6 +105,29 @@ const AdminUploadPage: React.FC = () => {
       setTimeout(() => setUploadStatusMessage(null), 10000); 
     } finally {
       setIsProcessingUpload(false);
+    }
+  };
+
+  const loadArtworks = async () => {
+    setIsLoadingArtworks(true);
+    setArtworkError(null);
+    try {
+      const data = await fetchArtworksFromBackend();
+      setArtworks(data);
+    } catch (error: any) {
+      setArtworkError(error?.message || 'Failed to load artworks.');
+    } finally {
+      setIsLoadingArtworks(false);
+    }
+  };
+
+  const handleDeleteArtwork = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this artwork?')) return;
+    try {
+      await deleteArtwork(id);
+      setArtworks((prev) => prev.filter((a) => a.id !== id));
+    } catch (error: any) {
+      alert(error?.message || 'Failed to delete artwork.');
     }
   };
 
@@ -188,11 +222,38 @@ const AdminUploadPage: React.FC = () => {
           ) : 'Upload Artwork'}
         </button>
       </form>
-       <p className="mt-8 text-center">
-            <a href="/" className="text-sm text-pink-400 hover:text-pink-300 hover:underline">
-              &larr; Back to Main Gallery
-            </a>
-          </p>
+      {/* Artwork List Section */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold text-pink-300 mb-4 text-center">Delete Existing Artworks</h2>
+        {isLoadingArtworks ? (
+          <p className="text-center text-slate-400">Loading artworks...</p>
+        ) : artworkError ? (
+          <p className="text-center text-red-400">{artworkError}</p>
+        ) : artworks.length === 0 ? (
+          <p className="text-center text-slate-400">No artworks found.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {artworks.map((artwork) => (
+              <div key={artwork.id} className="bg-slate-700 rounded-lg p-4 flex flex-col items-center">
+                <img src={artwork.imageUrl} alt={artwork.title} className="w-40 h-40 object-contain mb-2 rounded shadow" />
+                <div className="text-pink-300 font-semibold mb-1 text-center">{artwork.title}</div>
+                <div className="text-slate-400 text-xs mb-2 text-center">{artwork.artist}</div>
+                <button
+                  onClick={() => handleDeleteArtwork(artwork.id)}
+                  className="mt-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded shadow text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-50"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <p className="mt-8 text-center">
+        <a href="/" className="text-sm text-pink-400 hover:text-pink-300 hover:underline">
+          &larr; Back to Main Gallery
+        </a>
+      </p>
     </div>
   );
 };

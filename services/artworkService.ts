@@ -3,6 +3,7 @@ import { Artwork } from '../types';
 
 const XANO_SAVE_ARTWORK_ENDPOINT = process.env.XANO_SAVE_ARTWORK_ENDPOINT;
 const XANO_GET_ARTWORKS_ENDPOINT = process.env.XANO_GET_ARTWORKS_ENDPOINT;
+const XANO_DELETE_ARTWORK_ENDPOINT = process.env.XANO_DELETE_ARTWORK_ENDPOINT;
 
 interface ArtworkDataPayload extends Omit<Artwork, 'id'> {}
 
@@ -173,5 +174,47 @@ export const fetchArtworksFromBackend = async (): Promise<Artwork[]> => {
         throw error; 
     }
     throw new Error('An unexpected error occurred while fetching artworks.');
+  }
+};
+
+/**
+ * Deletes an artwork from the Xano backend by ID.
+ * @param id The ID of the artwork to delete.
+ * @returns A promise that resolves if the deletion is successful.
+ * @throws If the delete operation fails or XANO_DELETE_ARTWORK_ENDPOINT is not set.
+ */
+export const deleteArtwork = async (id: string): Promise<void> => {
+  if (!XANO_DELETE_ARTWORK_ENDPOINT) {
+    console.error('Xano Delete Artwork API endpoint is not configured.');
+    throw new Error('Backend service for deleting artwork is not configured (DELETE endpoint missing).');
+  }
+
+  try {
+    const url = `${XANO_DELETE_ARTWORK_ENDPOINT}/${id}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      let errorDetails = `Status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorDetails += `, Message: ${errorData.message || JSON.stringify(errorData)}`;
+      } catch (e) {
+        const textResponse = await response.text();
+        errorDetails += `, Body: ${textResponse || 'Unable to retrieve error body.'}`;
+      }
+      console.error('Xano API error (deleteArtwork):', errorDetails);
+      throw new Error(`Failed to delete artwork: ${errorDetails}`);
+    }
+  } catch (error) {
+    console.error('Error deleting artwork from Xano:', error);
+    if (error instanceof Error && error.message.startsWith('Failed to delete artwork:')) {
+      throw error;
+    }
+    throw new Error('An unexpected error occurred while deleting artwork.');
   }
 };
