@@ -121,11 +121,11 @@ const AdminUploadPage: React.FC = () => {
     }
   };
 
-  const handleDeleteArtwork = async (id: string) => {
+  const handleDeleteArtwork = async (id: string | number) => {
     if (!window.confirm('Are you sure you want to delete this artwork?')) return;
     try {
-      await deleteArtwork(id);
-      setArtworks((prev) => prev.filter((a) => a.id !== id));
+      await deleteArtwork(Number(id));
+      setArtworks((prev) => prev.filter((a) => Number(a.id) !== Number(id)));
     } catch (error: any) {
       alert(error?.message || 'Failed to delete artwork.');
     }
@@ -239,7 +239,7 @@ const AdminUploadPage: React.FC = () => {
                 <div className="text-pink-300 font-semibold mb-1 text-center">{artwork.title}</div>
                 <div className="text-slate-400 text-xs mb-2 text-center">{artwork.artist}</div>
                 <button
-                  onClick={() => handleDeleteArtwork(artwork.id)}
+                  onClick={() => handleDeleteArtwork(Number(artwork.id))}
                   className="mt-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded shadow text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-50"
                 >
                   Delete

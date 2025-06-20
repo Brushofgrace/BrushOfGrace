@@ -183,7 +183,7 @@ export const fetchArtworksFromBackend = async (): Promise<Artwork[]> => {
  * @returns A promise that resolves if the deletion is successful.
  * @throws If the delete operation fails or XANO_DELETE_ARTWORK_ENDPOINT is not set.
  */
-export const deleteArtwork = async (id: string): Promise<void> => {
+export const deleteArtwork = async (id: string | number): Promise<void> => {
   if (!XANO_DELETE_ARTWORK_ENDPOINT) {
     console.error('Xano Delete Artwork API endpoint is not configured.');
     throw new Error('Backend service for deleting artwork is not configured (DELETE endpoint missing).');
