@@ -1,6 +1,5 @@
 // services/aiDescriptionService.ts
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
-import { Artwork } from '../types'; // Assuming Artwork type might be useful or for context
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Changed from API_KEY
 
@@ -9,7 +8,7 @@ if (!GEMINI_API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY }); // Use the corrected variable
-const model = 'gemini-2.5-flash-preview-04-17'; // Vision capable model
+const model = 'gemini-1.5-flash'; // Current stable vision capable model
 
 // Helper function to convert File to base64 for Gemini API
 const fileToGenerativePart = (file: File): Promise<{ inlineData: { data: string, mimeType: string } }> => {
@@ -66,6 +65,12 @@ export const generateDescription = async (imageFile: File, originalTitle: string
     return description.trim();
   } catch (error) {
     console.error('Error generating description with Gemini API:', error);
+    
+    // Check if it's a specific API error with status
+    if (error && typeof error === 'object' && 'status' in error) {
+      throw new Error(`AI description generation failed: got status: ${error.status}. ${JSON.stringify(error)}`);
+    }
+    
     // It's good to check for specific error types from the SDK if available
     // and provide more user-friendly messages.
     if (error instanceof Error) {
